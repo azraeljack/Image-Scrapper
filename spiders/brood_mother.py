@@ -1,4 +1,4 @@
-from .exceptions import InvalidParamException
+from exceptions import InvalidParamException
 
 
 class BroodMother(object):
