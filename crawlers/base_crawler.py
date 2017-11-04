@@ -1,4 +1,5 @@
-from exceptions import InvalidParamException
+from exceptions import InvalidParam
+from bs4 import BeautifulSoup
 
 
 class BaseCrawler(object):
@@ -9,26 +10,40 @@ class BaseCrawler(object):
 
     DEFAULT_CONFIG = {}
 
-    def __init__(self, timeout=None, **kwargs):
-        pass
+    def __init__(self, **config):
+        self._selector = {}
 
-    def set_selector(self, pattern):
-        pass
+    @property
+    def selector(self):
+        return self._selector
+
+    @selector.setter
+    def selector(self, pattern):
+        # Add more validation
+        if isinstance(pattern, dict):
+            self._selector = pattern
+
+        raise InvalidParam('selector should be like {"name": {}, "attrs": {}}')
 
     def crawl(self, url):
         pass
 
-    def auth(self):
+    def auth(self, **auth):
         pass
+
+    def _parse_markup(self, markup):
+        parsed = BeautifulSoup(markup)
+        matched = parsed.find_all(**self.selector)
+        return [ele for ele in matched]
 
     def _parse_config(self, config):
         parsed_settings = self.DEFAULT_CONFIG
 
         for param, setting in config.items():
             if param not in self.DEFAULT_CONFIG:
-                raise InvalidParamException('Unknown parameter {}.'.format(param))
+                raise InvalidParam('Unknown parameter {}.'.format(param))
             elif not isinstance(setting, type(self.DEFAULT_CONFIG[param])):
-                raise InvalidParamException('Invalid setting {} for {}.'.format(setting, param))
+                raise InvalidParam('Invalid setting {} for {}.'.format(setting, param))
 
             parsed_settings[param] = setting
 
