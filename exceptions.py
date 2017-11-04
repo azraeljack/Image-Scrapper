@@ -1,2 +1,6 @@
-class InvalidParamException(Exception):
+class InvalidParam(Exception):
+    pass
+
+
+class QueueEmpty(Exception):
     pass
