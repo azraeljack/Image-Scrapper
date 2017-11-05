@@ -29,10 +29,10 @@ class BaseCrawler(object):
     @selector.setter
     def selector(self, pattern):
         # Add more validation
-        if isinstance(pattern, dict):
+        if isinstance(pattern, str):
             self._selector = pattern
         else:
-            raise InvalidParam('selector should be like {"name": {}, "attrs": {}}')
+            raise InvalidParam('selector should be in a valid css selector format')
 
     def crawl(self, url):
         pass
@@ -42,7 +42,7 @@ class BaseCrawler(object):
 
     def _parse_markup(self, markup):
         parsed = BeautifulSoup(markup, 'html5lib')
-        matched = parsed.find_all(**self.selector)
+        matched = parsed.select(self.selector)
         return [ele for ele in matched]
 
     def _parse_config(self, config):
