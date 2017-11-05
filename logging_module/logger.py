@@ -30,7 +30,7 @@ class Logger(object):
 
     instance = None
 
-    def __init__(self, log_type, log_path=None, log_level='INFO', log_format=None):
+    def __init__(self, log_type='console', log_path=None, log_level='INFO', log_format=None):
         if not Logger.instance:
             Logger.instance = Logger.__LoggerInstance(log_type, log_path, log_level, log_format)
 
