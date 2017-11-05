@@ -49,5 +49,5 @@ class Spiderling(Thread):
             self.logger.debug(resp.text)
 
     def stop(self):
-        self.logger.info('Worker')
+        self.logger.info('Stopping {} worker {}...'.format(self.__name__, self.id))
         self.join(timeout=self._exit_timeout)
