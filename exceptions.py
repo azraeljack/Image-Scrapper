@@ -4,3 +4,7 @@ class InvalidParam(Exception):
 
 class QueueEmpty(Exception):
     pass
+
+
+class ConnectionTimeout(Exception):
+    pass
