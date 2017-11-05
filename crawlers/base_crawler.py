@@ -12,6 +12,15 @@ class BaseCrawler(object):
 
     def __init__(self, **config):
         self._selector = {}
+        self._proxies = None
+
+    @property
+    def proxies(self):
+        return self._proxies
+
+    @proxies.setter
+    def proxies(self, proxies):
+        self._proxies = proxies
 
     @property
     def selector(self):
@@ -22,8 +31,8 @@ class BaseCrawler(object):
         # Add more validation
         if isinstance(pattern, dict):
             self._selector = pattern
-
-        raise InvalidParam('selector should be like {"name": {}, "attrs": {}}')
+        else:
+            raise InvalidParam('selector should be like {"name": {}, "attrs": {}}')
 
     def crawl(self, url):
         pass
@@ -32,7 +41,7 @@ class BaseCrawler(object):
         pass
 
     def _parse_markup(self, markup):
-        parsed = BeautifulSoup(markup)
+        parsed = BeautifulSoup(markup, 'html5lib')
         matched = parsed.find_all(**self.selector)
         return [ele for ele in matched]
 

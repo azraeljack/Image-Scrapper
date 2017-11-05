@@ -1,4 +1,5 @@
-from .base_crawler import BaseCrawler
+from crawlers.base_crawler import BaseCrawler
+from logging_module import Logger
 from exceptions import InvalidParam
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
@@ -13,8 +14,9 @@ class SeleniumCrawler(BaseCrawler):
         'web_driver': 'phantomjs',
         'executable_path': '../resource/phantomjs/phantomjs',
         'scroll_to_bottom': False,
-        'max_scroll_pause_time': 2,
-        'min_scroll_pause_time': 0.5,
+        'page_timeout': 10,
+        'max_scroll_pause_time': 1.5,
+        'min_scroll_pause_time': 1,
         'max_scroll_times': 65535  # Add this to avoid to many scrolls
     }
 
@@ -26,9 +28,9 @@ class SeleniumCrawler(BaseCrawler):
         'safari': webdriver.Safari
     }
 
-    def __init__(self, proxies, **config):
+    def __init__(self, **config):
+        self.logger = Logger().get_logger()
         self.config = self._parse_config(config)
-        self.proxies_pool = proxies
         driver_class = self.WEB_DRIVERS[self.config.get('web_driver', 'phantomjs').lower()]
 
         executable_path = self.config.get('executable_path')
@@ -39,24 +41,26 @@ class SeleniumCrawler(BaseCrawler):
         self.browser = driver_class(executable_path)
         super(SeleniumCrawler, self).__init__(**config)
 
-    def _set_proxies(self, proxies):
-        pass
-
     def _get_current_height(self):
-        return self.browser.execute_script('return document.body.scrollHeight;')
+        height = self.browser.execute_script('return document.body.scrollHeight;')
+        self.logger.debug('Current height is {}'.format(height))
+        return height
 
     def crawl(self, url, wait_until='body'):
+        self.logger.info('Loading url {} ...'.format(url))
         self.browser.get(url)
         WebDriverWait(self.browser, self.config['page_timeout']).until(
             expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, wait_until))
         )
 
         if self.config.get('scroll_to_bottom'):
+            self.logger.debug('Scrolling down page to the very bottom...')
             self.scroll_to_bottom()
 
         return self._parse_markup(self.browser.page_source)
 
     def scroll(self, height):
+        self.logger.debug('Scrolling page to {}...'.format(height))
         self.browser.execute_script('window.scrollTo(0, {});'.format(height))
 
     def scroll_to_bottom(self):
@@ -71,11 +75,26 @@ class SeleniumCrawler(BaseCrawler):
 
         for i in range(0, self.config['max_scroll_times']):
             self.scroll(self._get_current_height())
+
+            pause = uniform(min_pause, max_pause)
+            self.logger.debug('Too much scrolling, take a rest for {} seconds'.format(pause))
+            sleep(pause)
+
             new_height = self._get_current_height()
 
             if new_height == current_height:
+                self.logger.debug('Reached the bottom of the page')
                 break
 
             current_height = new_height
-            pause = uniform(min_pause, max_pause)
-            sleep(pause)
+
+
+if __name__ == '__main__':
+    Logger('console', log_level='DEBUG')
+    sc = SeleniumCrawler(scroll_to_bottom=True)
+    sc.selector = {'name': 'img'}
+    elements = sc.crawl('https://www.pinterest.ca/search/pins/?q=%E7%AA%97%E5%B8%98')
+    for element in elements:
+        print(element['src'])
+
+    print('Total {} links crawled!'.format(len(elements)))
